@@ -147,11 +147,22 @@ while True:
         except (ValueError, TypeError):
             sg.popup_error("A quantidade precisa ser um número inteiro entre 1 e 10.000.")
             continue
-        try:
-            length = int(str(values["-LEN-"]).strip())
-        except (ValueError, TypeError):
-            sg.popup_error(f"O comprimento precisa ser um número inteiro entre {MIN_LENGTH} e {MAX_LENGTH}.")
+        
+        # Valida comprimento
+        raw_length = str(values["-LEN-"]).strip()
+        if not raw_length:
+            length = 12  # valor padrão mais seguro
+        else:
+            try:
+                length = int(raw_length)
+            except ValueError:
+                sg.popup_error(f"O comprimento precisa ser um número inteiro entre {MIN_LENGTH} e {MAX_LENGTH}.")
+                continue
+        
+        if length < MIN_LENGTH or length > MAX_LENGTH:
+            sg.popup_error(f"Comprimento inválido. Use entre {MIN_LENGTH} e {MAX_LENGTH}.")
             continue
+
 
         try:
             senhas_atuais = gerar_lista(
