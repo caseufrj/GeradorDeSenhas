@@ -1,5 +1,5 @@
 
-name: Build Windows EXE
+name: Build Windows EXE (onefile)
 
 on:
   push:
@@ -14,35 +14,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11.9
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.11.9"
 
-      - name: Install deps
+      - name: Install deps (versões fixas)
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller
-          pip install FreeSimpleGUI
+          pip install "pyinstaller==6.17.0"
+          pip install "FreeSimpleGUI==4.60.5"  # ajuste se você usa outra versão
           pip install -r requirements.txt || Write-Host "Sem requirements.txt"
 
-      - name: Build
+      - name: Build (onefile)
         run: |
-          pyinstaller --noconsole --name GeradorDeSenhas app_senhas_gui.py
+          pyinstaller --clean --noconsole --onefile --name GeradorDeSenhas app_senhas_gui.py
 
-      - name: Verificar executável gerado (PowerShell)
+      - name: Verificar executável
         run: |
-          Write-Host "Listando saída do PyInstaller:"
-          Get-ChildItem -Recurse -Force dist | Format-Table -AutoSize
-          if (Test-Path "dist\GeradorDeSenhas\GeradorDeSenhas.exe") {
-            Write-Host "OK: executável encontrado em dist\GeradorDeSenhas\GeradorDeSenhas.exe"
+          if (Test-Path "dist\GeradorDeSenhas.exe") {
+            Write-Host "OK: dist\GeradorDeSenhas.exe gerado"
           } else {
-            Write-Error "ERRO: executável não encontrado em dist\GeradorDeSenhas\GeradorDeSenhas.exe"
+            Write-Error "ERRO: dist\GeradorDeSenhas.exe não encontrado"
             exit 1
           }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GeradorDeSenhas
-          path: dist\GeradorDeSenhas\GeradorDeSenhas.exe
+          name: GeradorDeSenhas_onefile
