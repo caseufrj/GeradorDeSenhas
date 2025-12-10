@@ -1,0 +1,92 @@
+
+name: Build EXE
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag/versão do release (ex.: v1.0.0) — opcional'
+        required: false
+        type: string
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Debug - listar arquivos
+        run: |
+          Write-Host "Diretório atual:"; Get-Location
+          Write-Host "Arquivos (recursivo):"; Get-ChildItem -Recurse
+          Write-Host "-----"
+          if (Test-Path requirements.txt) {
+            Write-Host "requirements.txt encontrado (conteúdo):"
+            Get-Content requirements.txt
+          } else {
+            Write-Host "requirements.txt NAO ENCONTRADO na raiz"
+          }
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          if (Test-Path requirements.txt) {
+            python -m pip install -r requirements.txt
+          } else {
+            python -m pip install FreeSimpleGUI
+          }
+          python -m pip install pyinstaller
+          Write-Host "----- pip list -----"
+          python -m pip list
+          Write-Host "----- pip show FreeSimpleGUI -----"
+          python -m pip show FreeSimpleGUI
+
+      - name: Mostrar versão do FreeSimpleGUI
+        run: |
+          python -c "import FreeSimpleGUI as sg, sys; print('FreeSimpleGUI version:', getattr(sg,'__version__','unknown')); print('module file:', getattr(sg,'__file__','unknown')); print('python:', sys.version)"
+
+      - name: Build EXE (arquivo na raiz, com ícone)
+        run: |
+          pyinstaller --onefile --noconsole --icon resources/app.ico --name GeradorDeSenhas5 app_senhas_gui.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeradorDeSenhas5
+          path: dist/GeradorDeSenhas5.exe
+
+      # Define a tag usando input de workflow ou fallback para v<run_number>
+      - name: Definir tag (para Release)
+        id: settag
+        run: |
+          $tag = "${{ github.event.inputs.version }}"
+          if ([string]::IsNullOrEmpty($tag)) { $tag = "v${{ github.run_number }}" }
+          "TAG_NAME=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "TAG_NAME=$tag"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: GeradorDeSenhas5 ${{ env.TAG_NAME }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload EXE to Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/GeradorDeSenhas5.exe
+          tag: ${{ env.TAG_NAME }}
+          overwrite: true
