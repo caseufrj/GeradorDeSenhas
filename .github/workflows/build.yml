@@ -24,27 +24,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller
           pip install FreeSimpleGUI
-          pip install -r requirements.txt || echo "Sem requirements.txt"
+          pip install -r requirements.txt || Write-Host "Sem requirements.txt"
 
       - name: Build
         run: |
           pyinstaller --noconsole --name GeradorDeSenhas app_senhas_gui.py
 
-      - name: Verificar executável gerado
+      - name: Verificar executável gerado (PowerShell)
         run: |
-          echo "Listando saída do PyInstaller:"
-          dir dist
-          dir dist\GeradorDeSenhas
-          if exist dist\GeradorDeSenhas\GeradorDeSenhas.exe (
-            echo "OK: executável encontrado"
-          ) else (
-            echo "ERRO: executável não encontrado em dist\GeradorDeSenhas\GeradorDeSenhas.exe"
-            exit /b 1
-          )
+          Write-Host "Listando saída do PyInstaller:"
+          Get-ChildItem -Recurse -Force dist | Format-Table -AutoSize
+          if (Test-Path "dist\GeradorDeSenhas\GeradorDeSenhas.exe") {
+            Write-Host "OK: executável encontrado em dist\GeradorDeSenhas\GeradorDeSenhas.exe"
+          } else {
+            Write-Error "ERRO: executável não encontrado em dist\GeradorDeSenhas\GeradorDeSenhas.exe"
+            exit 1
+          }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: GeradorDeSenhas
           path: dist\GeradorDeSenhas\GeradorDeSenhas.exe
-          
