@@ -47,3 +47,4 @@ jobs:
         with:
           name: GeradorDeSenhas
           path: dist\GeradorDeSenhas\GeradorDeSenhas.exe
+          
