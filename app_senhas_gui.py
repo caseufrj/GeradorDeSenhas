@@ -8,7 +8,7 @@ from datetime import datetime
 # === Configuração de limites ===
 MIN_LENGTH = 1
 MAX_LENGTH = 64
-DEFAULT_LENGTH = 12  # valor padrão mais seguro que 5
+DEFAULT_LENGTH = 5  # valor padrão mais seguro que 5
 
 # === Funções de senha (agora com comprimento variável) ===
 CHARSET = string.digits + string.ascii_uppercase + string.ascii_lowercase
