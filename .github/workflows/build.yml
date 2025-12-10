@@ -14,11 +14,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Se você versionar o ícone, pode ativar esta checagem.
-      # - name: Checar ícone
-      #   run: |
-      #     if exist resources\app.ico (echo "Icon OK") else (echo "Icon MISSING" && exit /b 1)
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -31,16 +26,24 @@ jobs:
           pip install FreeSimpleGUI
           pip install -r requirements.txt || echo "Sem requirements.txt"
 
-      - name: Build (sem ícone)
+      - name: Build
         run: |
           pyinstaller --noconsole --name GeradorDeSenhas app_senhas_gui.py
 
-      # Se quiser usar ícone, troque o passo acima por:
-      # - name: Build (com ícone)
-      #   run: |
-      #     pyinstaller --noconsole --icon resources\app.ico --name GeradorDeSenhas app_senhas_gui.py
+      - name: Verificar executável gerado
+        run: |
+          echo "Listando saída do PyInstaller:"
+          dir dist
+          dir dist\GeradorDeSenhas
+          if exist dist\GeradorDeSenhas\GeradorDeSenhas.exe (
+            echo "OK: executável encontrado"
+          ) else (
+            echo "ERRO: executável não encontrado em dist\GeradorDeSenhas\GeradorDeSenhas.exe"
+            exit /b 1
+          )
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: GeradorDeSenhas
+          path: dist\GeradorDeSenhas\GeradorDeSenhas.exe
