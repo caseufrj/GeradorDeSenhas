@@ -8,9 +8,9 @@ from datetime import datetime
 # === Configuração de limites ===
 MIN_LENGTH = 1
 MAX_LENGTH = 64
-DEFAULT_LENGTH = 5  # valor padrão mais seguro que 5
+DEFAULT_LENGTH = 12  # troque para 5 se quiser manter seu padrão anterior
 
-# === Funções de senha (agora com comprimento variável) ===
+# === Funções de senha (comprimento variável) ===
 CHARSET = string.digits + string.ascii_uppercase + string.ascii_lowercase
 sysrand = secrets.SystemRandom()
 
@@ -47,7 +47,6 @@ def gerar_lista(qtd, length=DEFAULT_LENGTH, unique=False, require_all=False):
     if not unique:
         return [gerar_senha(length=length, require_all=require_all) for _ in range(qtd)]
 
-    # Únicas
     senhas = set()
     while len(senhas) < qtd:
         senhas.add(gerar_senha(length=length, require_all=require_all))
@@ -74,20 +73,24 @@ def abrir_pasta_do_arquivo(caminho):
             else:
                 subprocess.run(['xdg-open', pasta])
     except Exception:
+        # Não interrompe a aplicação se não conseguir abrir a pasta
         pass
 
 # === GUI ===
-import FreeSimpleGUI as sg  # << usar FreeSimpleGUI
+import FreeSimpleGUI as sg  # usar FreeSimpleGUI
 
 def set_theme_safe(name="SystemDefault"):
+    """Aplica tema se a API existir; caso contrário, segue sem tema global."""
     try:
         if hasattr(sg, "theme") and callable(getattr(sg, "theme")):
-            sg.theme(name); return
+            sg.theme(name)
+            return
         if hasattr(sg, "ChangeLookAndFeel") and callable(getattr(sg, "ChangeLookAndFeel")):
-            sg.ChangeLookAndFeel(name); return
+            sg.ChangeLookAndFeel(name)
+            return
     except Exception:
+        # Qualquer erro aqui não deve travar a GUI
         pass
-    # Sem API de tema → segue sem tema global
 
 set_theme_safe("SystemDefault")
 
@@ -113,7 +116,7 @@ layout = [
 window = sg.Window("Gerador de Senhas", layout)
 senhas_atuais = []
 ultimo_arquivo = None
-ultimo_length = DEFAULT_LENGTH  # para referência no texto
+ultimo_length = DEFAULT_LENGTH
 
 while True:
     event, values = window.read()
@@ -175,3 +178,25 @@ while True:
         if not caminho:
             continue
         try:
+            salvar_csv(caminho, senhas_atuais)
+            ultimo_arquivo = caminho
+            sg.popup(f"Arquivo salvo:\n{os.path.basename(caminho)}")
+        except Exception as e:
+            sg.popup_error(f"Erro ao salvar: {e}")
+
+    if event == "-ABRIR-":
+        if ultimo_arquivo:
+            try:
+                abrir_pasta_do_arquivo(ultimo_arquivo)
+            except Exception:
+                # Não interrompe a GUI se falhar ao abrir
+                pass
+        else:
+            sg.popup("Nenhum arquivo salvo ainda.")
+
+    if event == "-LIMPAR-":
+        window["-OUT-"].update("")
+        senhas_atuais = []
+        ultimo_arquivo = None
+
+window.close()
