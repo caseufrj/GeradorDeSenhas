@@ -14,23 +14,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11.9
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.9"
 
-      - name: Install deps (versões fixas)
+      - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install "pyinstaller==6.17.0"
-          pip install "FreeSimpleGUI==4.60.5"  # ajuste se você usa outra versão
+          pip install FreeSimpleGUI
           pip install -r requirements.txt || Write-Host "Sem requirements.txt"
 
       - name: Build (onefile)
         run: |
           pyinstaller --clean --noconsole --onefile --name GeradorDeSenhas app_senhas_gui.py
 
-      - name: Verificar executável
+      - name: Verificar executável (PowerShell)
         run: |
           if (Test-Path "dist\GeradorDeSenhas.exe") {
             Write-Host "OK: dist\GeradorDeSenhas.exe gerado"
@@ -39,7 +39,8 @@ jobs:
             exit 1
           }
 
-      - name: Upload artifact
+      - name: Upload artifact (onefile)
         uses: actions/upload-artifact@v4
         with:
           name: GeradorDeSenhas_onefile
+          path: dist\GeradorDeSenhas.exe
